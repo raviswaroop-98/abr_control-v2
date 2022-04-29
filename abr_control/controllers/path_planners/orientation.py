@@ -6,10 +6,8 @@ import numpy as np
 
 from abr_control.utils import transformations
 
-from .path_planner import PathPlanner
 
-
-class Orientation(PathPlanner):
+class Orientation:
     """
     PARAMETERS
     ----------
@@ -99,6 +97,7 @@ class Orientation(PathPlanner):
 
         # stores the target Euler angles of the trajectory
         self.orientation_path = []
+        self.n = 0
         for _ in range(self.n_timesteps):
             quat = self._step(
                 orientation=orientation, target_orientation=target_orientation
@@ -127,23 +126,6 @@ class Orientation(PathPlanner):
             self._plot()
 
         return self.orientation_path
-
-    def _const_step(self, orientation, target_orientation):
-        """Calculates the next step along the planned trajectory
-
-        PARAMETERS
-        ----------
-        orientation: list of 4 floats
-            the starting orientation as a quaternion
-        target_orientation: list of 4 floats
-            the target orientation as a quaternion
-        """
-        orientation = transformations.quaternion_slerp(
-            quat0=orientation, quat1=target_orientation, fraction=self.timesteps[self.n]
-        )
-
-        self.n = min(self.n + 1, self.n_timesteps - 1)
-        return orientation
 
     def _step(self, orientation, target_orientation):
         """Calculates the next step along the planned trajectory
@@ -191,11 +173,19 @@ class Orientation(PathPlanner):
             True to plot the profile of the steps taken from start to target
             orientation
         """
-
+        # The algorithm for this requires the proportion to rotate the quaternion
+        # from 0 to 1 with 1 being at the target quaternion.
+        # To match the velocity profile of our position path, we can simple take
+        # the error of our position path at every point relative to the final
+        # target position.
         error = []
         dist = np.sqrt(np.sum((position_path[-1] - position_path[0]) ** 2))
         for ee in position_path:
             error.append(np.sqrt(np.sum((position_path[-1] - ee) ** 2)))
+
+        # If we normalize this error wrt our distance we will get an array from
+        # 1 to 0 that matches the velocity profile. We just shift this error to
+        # be from 0 to 1 (1-error)
         error /= dist
         error = 1 - error
 
