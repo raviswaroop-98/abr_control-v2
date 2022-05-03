@@ -127,11 +127,43 @@ class MujocoConfig:
 
         num_arms = len(self.arm)
         
+        N_ALL_JOINTS = self.sim.model.nv
+        self.N_ALL_JOINTS = N_ALL_JOINTS
+        self.joint_dyn_addrs = []
+        self.N_JOINTS = []
+        self.M_indices = []
+        self._g = []
+        self._J6N = []
+        self._MNN = []
+        for ii in range(num_arms):
+            
+            self.joint_dyn_addrs.append([])
+            self.joint_dyn_addrs[ii] = self.arm[ii].joint_dyn_addrs
+            
+            self.N_JOINTS.append([])
+            self.N_JOINTS[ii] = len(self.joint_dyn_addrs[ii])
+            
+            self.M_indices.append([])
+            self.M_indices[ii] = [
+                kk * N_ALL_JOINTS + jj
+                for jj in self.joint_dyn_addrs[ii]
+                for kk in self.joint_dyn_addrs[ii]
+            ]
+            self._g.append([])
+            self._g[ii] = np.zeros(self.N_JOINTS[ii])
+            self._J6N.append([])
+            self._J6N[ii] = np.zeros((6, self.N_JOINTS[ii]))
+            self._MNN.append([])
+            self._MNN[ii] = np.zeros(self.N_JOINTS[ii] ** 2)
+        
         ## Place holder until dynamics is fixed ## 
 
         # number of controllable joints in the robot arm
-        self.joint_dyn_addrs = self.arm[0].joint_dyn_addrs
-        self.N_JOINTS = len(self.joint_dyn_addrs)
+        #for ii in num_arms
+        
+        
+        #self.joint_dyn_addrs = self.arm[0].joint_dyn_addrs #done
+        #self.N_JOINTS = len(self.joint_dyn_addrs) #done
         # number of joints in the Mujoco simulation
         N_ALL_JOINTS = self.sim.model.nv
 
@@ -147,26 +179,27 @@ class MujocoConfig:
         for jj in range(num_arms):
             self.jac_indices.append([])
             for ii in range(3):
-                self.jac_indices[jj] = self.jac_indices[jj] + [x+(ii * N_ALL_JOINTS) for x in self.arm[jj].joint_dyn_addrs]
+                self.jac_indices[jj] = self.jac_indices[jj] + [jj+(ii * N_ALL_JOINTS) for jj in self.arm[jj].joint_dyn_addrs]
 
         # for the inertia matrix
-        self.M_indices = [
+        '''self.M_indices = [
             ii * N_ALL_JOINTS + jj
             for jj in self.joint_dyn_addrs
             for ii in self.joint_dyn_addrs
-        ]
+        ]'''
+        print("M_in : ",self.M_indices)
 
         # a place to store data returned from Mujoco
-        self._g = np.zeros(self.N_JOINTS)
+        
         self._J3NP = np.zeros(3 * N_ALL_JOINTS)
         self._J3NR = np.zeros(3 * N_ALL_JOINTS)
-        self._J6N = np.zeros((6, self.N_JOINTS))
+        
         self._MNN_vector = np.zeros(N_ALL_JOINTS ** 2)
-        self._MNN = np.zeros(self.N_JOINTS ** 2)
+
         self._R9 = np.zeros(9)
         self._R = np.zeros((3, 3))
         self._x = np.ones(4)
-        self.N_ALL_JOINTS = N_ALL_JOINTS
+        #self.N_ALL_JOINTS = N_ALL_JOINTS
         
 
     def _load_state(self, q,dq=None, u=None,arm_num=0):
@@ -213,7 +246,7 @@ class MujocoConfig:
         if not self.use_sim_state and q is not None:
             old_q, old_dq, old_u = self._load_state(q)
 
-        g = -1 * self.sim.data.qfrc_bias[self.joint_dyn_addrs]
+        g = -1 * self.sim.data.qfrc_bias[self.joint_dyn_addrs[arm_num]]
 
         if not self.use_sim_state and q is not None:
             self._load_state(old_q, old_dq, old_u)
@@ -241,7 +274,7 @@ class MujocoConfig:
         # general case, check differences.cpp'
         raise NotImplementedError
 
-    def J(self, name,arm_num=0,q=None, x=None, object_type="body"):
+    def J(self, name, q=None, x=None, object_type="body", arm_num=0):
         """Returns the Jacobian for the specified Mujoco object
 
         Parameters
@@ -287,14 +320,14 @@ class MujocoConfig:
             jacr(name, self._J3NR)[self.jac_indices[arm_num]]  # pylint: disable=W0106
 
         # get the position Jacobian hstacked (1 x N_JOINTS*3)
-        self._J6N[:3] = self._J3NP[self.jac_indices[arm_num]].reshape((3, self.N_JOINTS))
+        self._J6N[arm_num][:3] = self._J3NP[self.jac_indices[arm_num]].reshape((3, self.N_JOINTS[arm_num]))
         # get the rotation Jacobian hstacked (1 x N_JOINTS*3)
-        self._J6N[3:] = self._J3NR[self.jac_indices[arm_num]].reshape((3, self.N_JOINTS))
+        self._J6N[arm_num][3:] = self._J3NR[self.jac_indices[arm_num]].reshape((3, self.N_JOINTS[arm_num]))
 
         if not self.use_sim_state and q is not None:
             self._load_state(old_q, old_dq, old_u,arm_num)
 
-        return np.copy(self._J6N)
+        return np.copy(self._J6N[arm_num])
 
     def M(self, q=None):
         """Returns the inertia matrix in task space
@@ -311,8 +344,8 @@ class MujocoConfig:
         # stored in mjData.qM, stored in custom sparse format,
         # convert qM to a dense matrix with mj_fullM
         mjp.cymj._mj_fullM(self.model, self._MNN_vector, self.sim.data.qM)
-        M = self._MNN_vector[self.M_indices]
-        M = M.reshape((self.N_JOINTS, self.N_JOINTS))
+        M = self._MNN_vector[self.M_indices[arm_num]]
+        M = M.reshape((self.N_JOINTS[arm_num], self.N_JOINTS[arm_num]))
 
         if not self.use_sim_state and q is not None:
             self._load_state(old_q, old_dq, old_u)

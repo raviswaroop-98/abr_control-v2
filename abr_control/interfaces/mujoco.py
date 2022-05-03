@@ -217,7 +217,7 @@ class Mujoco(Interface):
         """
         self.sim.data.set_mocap_quat(name, quat)
 
-    def send_forces(self, u, update_display=True):
+    def send_forces(self, u, update_display=True, arm_num=0):
         """Apply the specified torque to the robot joints
 
         Apply the specified torque to the robot joints, move the simulation
@@ -233,7 +233,8 @@ class Mujoco(Interface):
 
         # NOTE: the qpos_addr's are unrelated to the order of the motors
         # NOTE: assuming that the robot arm motors are the first len(u) values
-        self.sim.data.ctrl[:] = u[:]
+
+        self.sim.data.ctrl[:6] = u[:]
 
         # move simulation ahead one time step
         self.sim.step()

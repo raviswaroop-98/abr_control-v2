@@ -130,7 +130,7 @@ class InverseKinematics:
             if method == 3:
                 # Primary position IK, control orientation in null space
                 dq = np.dot(pinv_Jx, dx) + np.dot(
-                    np.eye(self.robot_config.N_JOINTS) - np.dot(pinv_Jx, Jx),
+                    np.eye(self.robot_config.N_JOINTS[self.arm_num]) - np.dot(pinv_Jx, Jx),
                     np.dot(np.linalg.pinv(J[3:]), dr),
                 )
 
@@ -167,8 +167,8 @@ class InverseKinematics:
         # reset position_path index
         self.n_timesteps = n_timesteps
         self.n = 0
-        self.position_path = path[:, : self.robot_config.N_JOINTS]
-        self.velocity_path = path[:, self.robot_config.N_JOINTS :]
+        self.position_path = path[:, : self.robot_config.N_JOINTS[self.arm_num]]
+        self.velocity_path = path[:, self.robot_config.N_JOINTS[self.arm_num] :]
 
         return self.position_path, self.velocity_path
 
