@@ -128,6 +128,7 @@ class MujocoConfig:
         num_arms = len(self.arm)
         
         N_ALL_JOINTS = self.sim.model.nv
+        self.jac_indices= []
         self.N_ALL_JOINTS = N_ALL_JOINTS
         self.joint_dyn_addrs = []
         self.N_JOINTS = []
@@ -136,6 +137,10 @@ class MujocoConfig:
         self._J6N = []
         self._MNN = []
         for ii in range(num_arms):
+            
+            self.jac_indices.append([])
+            for kk in range(3):
+                self.jac_indices[ii] = self.jac_indices[ii] + [ii+(kk * N_ALL_JOINTS) for ii in self.arm[ii].joint_dyn_addrs]
             
             self.joint_dyn_addrs.append([])
             self.joint_dyn_addrs[ii] = self.arm[ii].joint_dyn_addrs
@@ -174,21 +179,8 @@ class MujocoConfig:
             [self.joint_dyn_addrs + (ii * N_ALL_JOINTS) for ii in range(3)]
         )'''
         
-        self.jac_indices= []
         
-        for jj in range(num_arms):
-            self.jac_indices.append([])
-            for ii in range(3):
-                self.jac_indices[jj] = self.jac_indices[jj] + [jj+(ii * N_ALL_JOINTS) for jj in self.arm[jj].joint_dyn_addrs]
-
-        # for the inertia matrix
-        '''self.M_indices = [
-            ii * N_ALL_JOINTS + jj
-            for jj in self.joint_dyn_addrs
-            for ii in self.joint_dyn_addrs
-        ]'''
-        print("M_in : ",self.M_indices)
-
+        
         # a place to store data returned from Mujoco
         
         self._J3NP = np.zeros(3 * N_ALL_JOINTS)
@@ -231,7 +223,7 @@ class MujocoConfig:
 
         return old_q, old_dq, old_u
 
-    def g(self, q=None):
+    def g(self, q=None,arm_num=0):
         """Returns qfrc_bias variable, which stores the effects of Coriolis,
         centrifugal, and gravitational forces
 
@@ -329,7 +321,7 @@ class MujocoConfig:
 
         return np.copy(self._J6N[arm_num])
 
-    def M(self, q=None):
+    def M(self, q=None,arm_num=0):
         """Returns the inertia matrix in task space
 
         Parameters

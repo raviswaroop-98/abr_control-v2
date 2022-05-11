@@ -20,7 +20,7 @@ class InverseKinematics:
         the speed [rad/sec] to maintain each step
     """
 
-    def __init__(self,robot_config,arm_num=0,max_dx=0.2, max_dr=2 * np.pi, max_dq=np.pi):
+    def __init__(self,robot_config,max_dx=0.2, max_dr=2 * np.pi, max_dq=np.pi, arm_num=0,):
         self.robot_config = robot_config
         self.max_dx = max_dx
         self.max_dr = max_dr

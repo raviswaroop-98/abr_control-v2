@@ -76,7 +76,6 @@ class Mujoco(Interface):
             for i in range(len(joint_names)):
                 joint_ids.append([])
                 joint_ids[i] = [model.joint_name2id(name) for name in joint_names[i]]
-            
         '''
         self.joint_pos_addrs = [model.get_joint_qpos_addr(name) for name in joint_names]
         self.joint_vel_addrs = [model.get_joint_qvel_addr(name) for name in joint_names]
@@ -233,20 +232,19 @@ class Mujoco(Interface):
 
         # NOTE: the qpos_addr's are unrelated to the order of the motors
         # NOTE: assuming that the robot arm motors are the first len(u) values
-
-        self.sim.data.ctrl[:6] = u[:]
+        self.sim.data.ctrl[self.arm[arm_num].ctrl_index] = u[:]
 
         # move simulation ahead one time step
         self.sim.step()
 
-        # Update position of hand object
+        '''# Update position of hand object
         feedback = self.get_feedback()
         hand_xyz = self.robot_config.Tx(name="EE", q=feedback["q"])
         self.set_mocap_xyz("hand", hand_xyz)
 
         # Update orientation of hand object
         hand_quat = self.robot_config.quaternion(name="EE", q=feedback["q"])
-        self.set_mocap_orientation("hand", hand_quat)
+        self.set_mocap_orientation("hand", hand_quat)'''
 
         if self.visualize and update_display:
             self.viewer.render()

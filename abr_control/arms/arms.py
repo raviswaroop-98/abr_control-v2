@@ -19,6 +19,9 @@ class arms:
         self.sim = sim
         model = self.sim.model
         
+        actuator_trnid = model.actuator_trnid[:,0]
+        self.ctrl_index = np.intersect1d(actuator_trnid,joint_ids,return_indices=True)[1]
+        
         joint_addr = model.body_jntadr
         bodyid_ee = np.where(joint_addr == joint_ids[-1])[0]
         while bodyid_ee < len(joint_addr)-1 and joint_addr[bodyid_ee+1] == -1:
@@ -45,13 +48,7 @@ class arms:
                 joint_vel_addrs.append(elem)
         self.joint_vel_addrs = joint_vel_addrs
 
-        # Need to also get the joint rows of the Jacobian, inertia matrix, and
-        # gravity vector. This is trickier because if there's a quaternion in
-        # the joint (e.g. a free joint or a ball joint) then the joint position
-        # address will be different than the joint Jacobian row. This is because
-        # the quaternion joint will have a 4D position and a 3D derivative. So
-        # we go through all the joints, and find out what type they are, then
-        # calculate the Jacobian position based on their order and type.
+
         index = self.joint_pos_addrs[0]
         self.joint_dyn_addrs = []
         for ii, joint_type in enumerate(model.jnt_type):
@@ -66,6 +63,4 @@ class arms:
                 else:  # slide or hinge joint
                     index += 1  # derivative has 1 dimensions
 
-        # give the robot config access to the sim for wrapping the
-        # forward kinematics / dynamics functions
         
