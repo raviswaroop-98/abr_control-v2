@@ -120,13 +120,10 @@ class MujocoConfig:
         """
         # get access to the Mujoco simulation
         self.sim = sim
-        #self.joint_pos_addrs = np.copy(joint_pos_addrs)
-        #self.joint_vel_addrs = np.copy(joint_vel_addrs)
-        #self.joint_dyn_addrs = np.copy(joint_dyn_addrs)
         self.arm = arm
-
         num_arms = len(self.arm)
         
+        # a place to store data returned from Mujoco
         N_ALL_JOINTS = self.sim.model.nv
         self.jac_indices= []
         self.N_ALL_JOINTS = N_ALL_JOINTS
@@ -161,37 +158,12 @@ class MujocoConfig:
             self._MNN.append([])
             self._MNN[ii] = np.zeros(self.N_JOINTS[ii] ** 2)
         
-        ## Place holder until dynamics is fixed ## 
-
-        # number of controllable joints in the robot arm
-        #for ii in num_arms
-        
-        
-        #self.joint_dyn_addrs = self.arm[0].joint_dyn_addrs #done
-        #self.N_JOINTS = len(self.joint_dyn_addrs) #done
-        # number of joints in the Mujoco simulation
-        N_ALL_JOINTS = self.sim.model.nv
-
-        # need to calculate the joint_dyn_addrs indices in flat vectors returned
-        # for the Jacobian
-        '''self.jac_indices = np.hstack(
-            # 6 because position and rotation Jacobians are 3 x N_JOINTS
-            [self.joint_dyn_addrs + (ii * N_ALL_JOINTS) for ii in range(3)]
-        )'''
-        
-        
-        
-        # a place to store data returned from Mujoco
-        
         self._J3NP = np.zeros(3 * N_ALL_JOINTS)
         self._J3NR = np.zeros(3 * N_ALL_JOINTS)
-        
         self._MNN_vector = np.zeros(N_ALL_JOINTS ** 2)
-
         self._R9 = np.zeros(9)
         self._R = np.zeros((3, 3))
         self._x = np.ones(4)
-        #self.N_ALL_JOINTS = N_ALL_JOINTS
         
 
     def _load_state(self, q,dq=None, u=None,arm_num=0):
@@ -296,8 +268,7 @@ class MujocoConfig:
                 self._J3NR,
                 self.model.body_name2id(name),
             )
-            '''jacp = self.sim.data.get_body_jacp
-            jacr = self.sim.data.get_body_jacr'''
+            
         else:
             if object_type == "geom":
                 jacp = self.sim.data.get_geom_jacp

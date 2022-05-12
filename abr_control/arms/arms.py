@@ -7,9 +7,6 @@ Created on Sat Apr 23 19:23:15 2022
 """
 
 import numpy as np
-#from abr_control.interfaces.mujoco import Mujoco
-
-
 
 class arms:
     
