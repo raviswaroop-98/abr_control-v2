@@ -15,9 +15,9 @@ class RestingConfig(Joint):
         such as number of joints, number of links, mass information etc.
     """
 
-    def __init__(self, robot_config, rest_angles, **kwargs,arm_num=0):
-        self.arm_num = arm_num
-        super().__init__(robot_config, account_for_gravity=False, **kwargs,arm_num=self.arm_num)
+    def __init__(self, robot_config, rest_angles, **kwargs):
+        
+        super().__init__(robot_config, account_for_gravity=False, **kwargs)
 
         self.rest_angles = np.asarray(rest_angles)
         self.rest_indices = [val is not None for val in rest_angles]
