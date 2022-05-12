@@ -40,9 +40,7 @@ try:
     count = 0
     print("\nSimulation starting...\n")
     while count < 2500:
-        if interface.viewer.exit:
-            glfw.destroy_window(interface.viewer.window)
-            break
+        
         # get joint angle and velocity feedback
         feedback = interface.get_feedback()
 
@@ -54,7 +52,7 @@ try:
         )
 
         # add gripper forces
-        u = np.hstack((u, np.zeros(robot_config.N_GRIPPER_JOINTS)))
+        #u = np.hstack((u, np.zeros(robot_config.N_GRIPPER_JOINTS)))
 
         # send forces into Mujoco, step the sim forward
         interface.send_forces(u)
@@ -81,6 +79,6 @@ finally:
         plt.plot(
             np.ones(q_track.shape) * ((target + np.pi) % (np.pi * 2) - np.pi), "--"
         )
-        plt.legend(range(robot_config.N_JOINTS))
+        plt.legend(range(robot_config.N_JOINTS[0]))
         plt.tight_layout()
         plt.show()
